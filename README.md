@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/prompt--scaffold-v1.0.2-blueviolet?style=for-the-badge&logo=rocket" alt="version" />
+<img src="https://img.shields.io/badge/prompt--scaffold-v1.0.3-blueviolet?style=for-the-badge&logo=rocket" alt="version" />
 
 # 🏗️ prompt-scaffold
 
