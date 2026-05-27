@@ -1,6 +1,6 @@
 {
   "name": "prompt-scaffold",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Universal AI-ready project scaffolder — generates projects with built-in context rules for Cursor, Windsurf, Copilot, and Claude Code.",
   "type": "module",
   "main": "./dist/index.js",
@@ -25,7 +25,15 @@
     "antigravity",
     "boilerplate",
     "project-generator",
-    "developer-tools"
+    "developer-tools",
+    "nextjs",
+    "react",
+    "vite",
+    "express",
+    "nestjs",
+    "fastapi",
+    "django",
+    "bun"
   ],
   "author": "",
   "license": "MIT",

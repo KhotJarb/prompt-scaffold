@@ -33,8 +33,9 @@ export function printHelp(): void {
 
   OPTIONS
     --name <name>          Project name (lowercase, hyphens, dots, underscores)
-    --template <template>  Template to use: nextjs | fastapi | express
-    --pm <manager>         Package manager: npm | pnpm | yarn
+    --template <template>  Template: nextjs | react-vite | express | nestjs | fastapi | django
+    --pm <manager>         Package manager: npm | pnpm | yarn | bun
+    --output <path>        Output directory (default: current directory)
     --inject               Inject AI rules into an existing project (no scaffolding)
     --no-git               Skip git initialization
     --help, -h             Show this help message
@@ -43,9 +44,10 @@ export function printHelp(): void {
   EXAMPLES
     $ prompt-scaffold
     $ prompt-scaffold --name my-app --template nextjs --pm pnpm
+    $ prompt-scaffold --name api --template nestjs --pm bun
+    $ prompt-scaffold --output ~/projects --name my-app --template react-vite
     $ prompt-scaffold --inject
-    $ prompt-scaffold --inject --template fastapi
-    $ prompt-scaffold --name api --template express --no-git
+    $ prompt-scaffold --inject --template django
 `);
 }
 
@@ -121,6 +123,14 @@ export function parseArgs(argv: string[] = process.argv.slice(2)): CLIArgs {
         }
         break;
 
+      case '--output':
+      case '-o':
+        if (next && !next.startsWith('-')) {
+          args.outputDir = next;
+          i++;
+        }
+        break;
+
       default:
         // Handle --key=value syntax
         if (arg.startsWith('--') && arg.includes('=')) {
@@ -145,6 +155,10 @@ export function parseArgs(argv: string[] = process.argv.slice(2)): CLIArgs {
                 console.error(`Invalid package manager: "${val}". Must be one of: ${PACKAGE_MANAGER_VALUES.join(', ')}`);
                 process.exit(1);
               }
+              break;
+            case '--output':
+            case '-o':
+              args.outputDir = val;
               break;
           }
         }

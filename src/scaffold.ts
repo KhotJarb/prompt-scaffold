@@ -5,9 +5,13 @@ import fs from 'fs-extra';
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
 import type { ProjectConfig, Template, GeneratedFile } from './types.js';
+import { PYTHON_TEMPLATES } from './types.js';
 import { getNextjsFiles } from './templates/nextjs.js';
+import { getReactViteFiles } from './templates/react-vite.js';
 import { getFastapiFiles } from './templates/fastapi.js';
 import { getExpressFiles } from './templates/express.js';
+import { getNestjsFiles } from './templates/nestjs.js';
+import { getDjangoFiles } from './templates/django.js';
 import { generateAIRuleFiles, generateCustomRulesTemplate } from './ai-rules/generator.js';
 
 /**
@@ -42,10 +46,23 @@ function execAsync(
 /**
  * Template metadata for display purposes.
  */
-const TEMPLATE_META = {
+const TEMPLATE_META: Record<Template, {
+  label: string;
+  icon: string;
+  color: (s: string) => string;
+  installCmd: (pm: string) => string;
+  devCmd: (pm: string) => string;
+}> = {
   nextjs: {
     label: 'Next.js Web App',
     icon: '▲',
+    color: pc.cyan,
+    installCmd: (pm: string) => `${pm} install`,
+    devCmd: (pm: string) => `${pm} run dev`,
+  },
+  'react-vite': {
+    label: 'React + Vite SPA',
+    icon: '⚛',
     color: pc.cyan,
     installCmd: (pm: string) => `${pm} install`,
     devCmd: (pm: string) => `${pm} run dev`,
@@ -57,14 +74,28 @@ const TEMPLATE_META = {
     installCmd: () => 'pip install -r requirements.txt',
     devCmd: () => 'uvicorn app.main:app --reload',
   },
+  django: {
+    label: 'Python Django',
+    icon: '🌿',
+    color: pc.green,
+    installCmd: () => 'pip install -r requirements.txt',
+    devCmd: () => 'python manage.py runserver',
+  },
   express: {
-    label: 'Node.js Express API',
+    label: 'Express API',
     icon: '🚂',
     color: pc.yellow,
     installCmd: (pm: string) => `${pm} install`,
     devCmd: (pm: string) => `${pm} run dev`,
   },
-} as const;
+  nestjs: {
+    label: 'NestJS API',
+    icon: '🔺',
+    color: pc.red,
+    installCmd: (pm: string) => `${pm} install`,
+    devCmd: (pm: string) => `${pm} run start:dev`,
+  },
+};
 
 /**
  * Returns the list of boilerplate files for the chosen template.
@@ -73,10 +104,16 @@ function getTemplateFiles(config: ProjectConfig): GeneratedFile[] {
   switch (config.template) {
     case 'nextjs':
       return getNextjsFiles(config.name);
+    case 'react-vite':
+      return getReactViteFiles(config.name);
     case 'fastapi':
       return getFastapiFiles(config.name);
+    case 'django':
+      return getDjangoFiles(config.name);
     case 'express':
       return getExpressFiles(config.name);
+    case 'nestjs':
+      return getNestjsFiles(config.name);
   }
 }
 
@@ -99,6 +136,7 @@ async function writeFiles(projectRoot: string, files: GeneratedFile[]): Promise<
  */
 function generateProjectReadme(config: ProjectConfig): GeneratedFile {
   const meta = TEMPLATE_META[config.template];
+  const isPython = PYTHON_TEMPLATES.includes(config.template);
 
   return {
     path: 'README.md',
@@ -115,7 +153,19 @@ ${meta.installCmd(config.packageManager)}
 # Start development server
 ${meta.devCmd(config.packageManager)}
 \`\`\`
+${isPython ? `
+## Python Setup
 
+\`\`\`bash
+# Create a virtual environment (recommended)
+python -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+.venv\\\\Scripts\\\\activate     # Windows
+
+# Then install dependencies
+pip install -r requirements.txt
+\`\`\`
+` : ''}
 ## AI-Ready Development
 
 This project includes **Universal AI Context Rules** — pre-configured instruction files
@@ -241,10 +291,14 @@ export async function injectRules(template: Template): Promise<void> {
 /**
  * Main scaffolding orchestrator.
  * Creates the project directory, writes template files, generates AI rules,
- * optionally initializes git and installs dependencies.
+ * optionally initializes git.
  */
 export async function scaffoldProject(config: ProjectConfig): Promise<void> {
-  const projectRoot = path.resolve(process.cwd(), config.name);
+  // ── Resolve output path ────────────────────────────────────────
+  const baseDir = config.outputDir
+    ? path.resolve(config.outputDir)
+    : process.cwd();
+  const projectRoot = path.resolve(baseDir, config.name);
   const meta = TEMPLATE_META[config.template];
 
   // ── Check if directory already exists ──────────────────────────
@@ -317,7 +371,9 @@ export async function scaffoldProject(config: ProjectConfig): Promise<void> {
       `${pc.bold(pc.green(`${meta.icon} ${config.name}`))} has been created with ${pc.bold(String(totalFiles))} files!`,
       '',
       `${pc.dim('Template:')}     ${meta.color(meta.label)}`,
-      `${pc.dim('Pkg Manager:')}  ${config.packageManager}`,
+      ...(PYTHON_TEMPLATES.includes(config.template)
+        ? []
+        : [`${pc.dim('Pkg Manager:')}  ${config.packageManager}`]),
       `${pc.dim('Location:')}     ${pc.underline(projectRoot)}`,
       `${pc.dim('Git:')}          ${gitInitialized ? pc.green('Initialized') : config.initGit ? pc.yellow('Failed') : pc.dim('Skipped')}`,
       '',
@@ -337,7 +393,7 @@ export async function scaffoldProject(config: ProjectConfig): Promise<void> {
     [
       `${pc.bold('Next steps:')}`,
       '',
-      `  ${pc.cyan('1.')} cd ${pc.green(config.name)}`,
+      `  ${pc.cyan('1.')} cd ${pc.green(projectRoot !== path.resolve(process.cwd(), config.name) ? projectRoot : config.name)}`,
       `  ${pc.cyan('2.')} ${pc.green(meta.installCmd(config.packageManager))}`,
       `  ${pc.cyan('3.')} ${pc.green(meta.devCmd(config.packageManager))}`,
       '',

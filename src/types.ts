@@ -1,12 +1,13 @@
-export type Template = 'nextjs' | 'fastapi' | 'express';
+export type Template = 'nextjs' | 'react-vite' | 'express' | 'nestjs' | 'fastapi' | 'django';
 
-export type PackageManager = 'npm' | 'pnpm' | 'yarn';
+export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
 export interface ProjectConfig {
   name: string;
   template: Template;
   packageManager: PackageManager;
   initGit: boolean;
+  outputDir?: string;
 }
 
 export interface GeneratedFile {
@@ -27,10 +28,17 @@ export interface CLIArgs {
   inject: boolean;
   help: boolean;
   version: boolean;
+  outputDir?: string;
 }
 
 /** Templates that are valid for selection */
-export const TEMPLATE_VALUES: Template[] = ['nextjs', 'fastapi', 'express'];
+export const TEMPLATE_VALUES: Template[] = ['nextjs', 'react-vite', 'express', 'nestjs', 'fastapi', 'django'];
 
 /** Package managers that are valid for selection */
-export const PACKAGE_MANAGER_VALUES: PackageManager[] = ['npm', 'pnpm', 'yarn'];
+export const PACKAGE_MANAGER_VALUES: PackageManager[] = ['npm', 'pnpm', 'yarn', 'bun'];
+
+/** Templates that use Node.js package managers */
+export const NODE_TEMPLATES: Template[] = ['nextjs', 'react-vite', 'express', 'nestjs'];
+
+/** Templates that use Python (pip) */
+export const PYTHON_TEMPLATES: Template[] = ['fastapi', 'django'];

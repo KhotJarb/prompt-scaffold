@@ -1,6 +1,19 @@
+import path from 'node:path';
+import os from 'node:os';
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
 import type { ProjectConfig, Template, PackageManager, CLIArgs } from './types.js';
+import { PYTHON_TEMPLATES } from './types.js';
+
+/**
+ * Returns the appropriate install command for the template.
+ */
+function getInstallCmd(template: Template, pm: PackageManager): string {
+  if (PYTHON_TEMPLATES.includes(template)) {
+    return 'pip install -r requirements.txt';
+  }
+  return `${pm} install`;
+}
 
 /**
  * Runs the interactive CLI prompts to gather project configuration.
@@ -16,6 +29,7 @@ export async function gatherProjectConfig(
   const prefilledName = cliArgs.name;
   const prefilledTemplate = cliArgs.template;
   const prefilledPM = cliArgs.packageManager;
+  const prefilledOutput = cliArgs.outputDir;
   const noGit = (cliArgs as CLIArgs & { _noGit?: boolean })._noGit ?? false;
 
   // If everything is pre-filled from CLI args, skip all prompts
@@ -29,6 +43,7 @@ export async function gatherProjectConfig(
       template: prefilledTemplate,
       packageManager: prefilledPM,
       initGit: !noGit,
+      outputDir: prefilledOutput,
     };
   }
 
@@ -64,37 +79,102 @@ export async function gatherProjectConfig(
         return p.select<Template>({
           message: 'Which template would you like to use?',
           options: [
+            // ── Frontend ─────────────────
             {
               value: 'nextjs' as const,
-              label: 'Next.js Web App',
+              label: `${pc.cyan('▲')} Next.js Web App`,
               hint: 'App Router + Tailwind CSS + TypeScript',
             },
             {
-              value: 'fastapi' as const,
-              label: 'Python FastAPI',
-              hint: 'FastAPI + Pydantic + SQLAlchemy',
+              value: 'react-vite' as const,
+              label: `${pc.cyan('⚛')} React + Vite`,
+              hint: 'SPA + Tailwind CSS + TypeScript',
             },
+            // ── Backend ──────────────────
             {
               value: 'express' as const,
-              label: 'Node.js Express API',
+              label: `${pc.yellow('🚂')} Express API`,
               hint: 'Express 5 + TypeScript + Zod',
+            },
+            {
+              value: 'nestjs' as const,
+              label: `${pc.red('🔺')} NestJS API`,
+              hint: 'NestJS + TypeScript + Decorators',
+            },
+            {
+              value: 'fastapi' as const,
+              label: `${pc.green('⚡')} FastAPI`,
+              hint: 'Python + Pydantic + SQLAlchemy',
+            },
+            {
+              value: 'django' as const,
+              label: `${pc.green('🌿')} Django`,
+              hint: 'Python + ORM + REST Framework',
             },
           ],
         });
       },
 
-      packageManager: () => {
+      packageManager: ({ results }) => {
+        const tmpl = results.template as Template;
+
+        // Python templates always use pip — skip PM prompt
+        if (PYTHON_TEMPLATES.includes(tmpl)) {
+          return Promise.resolve('npm' as PackageManager); // placeholder, not used
+        }
+
         if (prefilledPM) {
           p.log.info(`${pc.dim('Package Manager:')} ${pc.bold(prefilledPM)}`);
           return Promise.resolve(prefilledPM);
         }
+
         return p.select<PackageManager>({
           message: 'Which package manager do you prefer?',
           options: [
             { value: 'npm' as const, label: 'npm', hint: 'Default Node.js package manager' },
             { value: 'pnpm' as const, label: 'pnpm', hint: 'Fast, disk-space efficient' },
             { value: 'yarn' as const, label: 'yarn', hint: 'Facebook\'s package manager' },
+            { value: 'bun' as const, label: 'bun', hint: 'All-in-one JS runtime (fastest)' },
           ],
+        });
+      },
+
+      outputDir: () => {
+        if (prefilledOutput) {
+          p.log.info(`${pc.dim('Output:')} ${pc.bold(prefilledOutput)}`);
+          return Promise.resolve(prefilledOutput);
+        }
+        return p.select<string>({
+          message: 'Where would you like to create the project?',
+          options: [
+            {
+              value: '.',
+              label: `Current directory ${pc.dim('(' + process.cwd() + ')')}`,
+            },
+            {
+              value: path.join(os.homedir(), 'Desktop'),
+              label: `Desktop ${pc.dim('(' + path.join(os.homedir(), 'Desktop') + ')')}`,
+            },
+            {
+              value: '__custom__',
+              label: 'Custom path...',
+            },
+          ],
+        });
+      },
+
+      customPath: ({ results }) => {
+        if (results.outputDir !== '__custom__') {
+          return Promise.resolve(undefined);
+        }
+        return p.text({
+          message: 'Enter the output directory path:',
+          placeholder: 'C:\\Projects',
+          validate(value) {
+            if (!value || value.trim().length === 0) {
+              return 'Path is required.';
+            }
+          },
         });
       },
 
@@ -114,11 +194,15 @@ export async function gatherProjectConfig(
     }
   );
 
+  // Resolve the output directory
+  const resolvedOutput = config.customPath || (config.outputDir === '.' ? undefined : config.outputDir);
+
   return {
     name: config.name.trim(),
     template: config.template,
-    packageManager: config.packageManager,
+    packageManager: config.packageManager as PackageManager,
     initGit: config.initGit,
+    outputDir: resolvedOutput as string | undefined,
   };
 }
 
@@ -144,8 +228,11 @@ export async function gatherInjectConfig(
   if (detectedTemplate) {
     const labels: Record<Template, string> = {
       nextjs: 'Next.js App Router',
+      'react-vite': 'React + Vite SPA',
       fastapi: 'Python FastAPI',
       express: 'Node.js Express API',
+      nestjs: 'NestJS API',
+      django: 'Python Django',
     };
 
     const confirmed = await p.confirm({
@@ -173,14 +260,29 @@ export async function gatherInjectConfig(
         hint: 'App Router + Tailwind CSS + TypeScript',
       },
       {
-        value: 'fastapi' as const,
-        label: 'Python FastAPI',
-        hint: 'FastAPI + Pydantic + SQLAlchemy',
+        value: 'react-vite' as const,
+        label: 'React + Vite',
+        hint: 'SPA + Tailwind CSS + TypeScript',
       },
       {
         value: 'express' as const,
-        label: 'Node.js Express API',
+        label: 'Express API',
         hint: 'Express 5 + TypeScript + Zod',
+      },
+      {
+        value: 'nestjs' as const,
+        label: 'NestJS API',
+        hint: 'NestJS + TypeScript + Decorators',
+      },
+      {
+        value: 'fastapi' as const,
+        label: 'FastAPI',
+        hint: 'FastAPI + Pydantic + SQLAlchemy',
+      },
+      {
+        value: 'django' as const,
+        label: 'Django',
+        hint: 'Django + ORM + REST Framework',
       },
     ],
   });
