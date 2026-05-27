@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { exec } from 'node:child_process';
 import os from 'node:os';
 import fs from 'fs-extra';
 import * as p from '@clack/prompts';
@@ -11,17 +11,32 @@ import { getExpressFiles } from './templates/express.js';
 import { generateAIRuleFiles, generateCustomRulesTemplate } from './ai-rules/generator.js';
 
 /**
- * Returns shell options for execSync that work cross-platform.
- * On Windows, forces cmd.exe to avoid PowerShell execution policy issues.
+ * Promisified exec that uses cmd.exe on Windows to avoid PowerShell issues.
+ * Returns { stdout, stderr } on success, or throws with stderr on failure.
  */
-function getShellOptions(cwd: string, timeout?: number) {
+function execAsync(
+  cmd: string,
+  cwd: string,
+  timeout?: number
+): Promise<{ stdout: string; stderr: string }> {
   const isWindows = os.platform() === 'win32';
-  return {
-    cwd,
-    stdio: 'pipe' as const,
-    shell: isWindows ? 'cmd.exe' : undefined,
-    ...(timeout ? { timeout } : {}),
-  };
+  return new Promise((resolve, reject) => {
+    exec(
+      cmd,
+      {
+        cwd,
+        shell: isWindows ? 'cmd.exe' : undefined,
+        ...(timeout ? { timeout } : {}),
+      },
+      (error, stdout, stderr) => {
+        if (error) {
+          reject(new Error(stderr || error.message));
+        } else {
+          resolve({ stdout, stderr });
+        }
+      }
+    );
+  });
 }
 
 /**
@@ -134,13 +149,13 @@ MIT
 
 /**
  * Initializes a git repository and creates an initial commit.
+ * Uses async exec so the spinner keeps animating.
  */
 async function initGitRepo(projectRoot: string): Promise<boolean> {
   try {
-    const opts = getShellOptions(projectRoot);
-    execSync('git init', opts);
-    execSync('git add .', opts);
-    execSync('git commit -m "Initial commit from prompt-scaffold"', opts);
+    await execAsync('git init', projectRoot);
+    await execAsync('git add .', projectRoot);
+    await execAsync('git commit -m "Initial commit from prompt-scaffold"', projectRoot);
     return true;
   } catch {
     return false;
@@ -149,18 +164,21 @@ async function initGitRepo(projectRoot: string): Promise<boolean> {
 
 /**
  * Installs project dependencies using the selected package manager.
+ * Uses async exec so the spinner keeps animating.
+ * Returns { success, errorMessage } for better diagnostics.
  */
 async function installDependencies(
   projectRoot: string,
   config: ProjectConfig
-): Promise<boolean> {
+): Promise<{ success: boolean; errorMessage?: string }> {
   try {
     const meta = TEMPLATE_META[config.template];
     const cmd = meta.installCmd(config.packageManager);
-    execSync(cmd, getShellOptions(projectRoot, 120_000));
-    return true;
-  } catch {
-    return false;
+    await execAsync(cmd, projectRoot, 120_000);
+    return { success: true };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    return { success: false, errorMessage: msg };
   }
 }
 
@@ -315,14 +333,19 @@ export async function scaffoldProject(config: ProjectConfig): Promise<void> {
   let depsInstalled = false;
   if (config.installDeps) {
     const s5 = p.spinner();
-    s5.start(`Installing dependencies with ${config.packageManager}...`);
+    s5.start(`Installing dependencies with ${config.packageManager}... ${pc.dim('(this may take a minute)')}`);
 
-    depsInstalled = await installDependencies(projectRoot, config);
+    const result = await installDependencies(projectRoot, config);
+    depsInstalled = result.success;
 
-    if (depsInstalled) {
+    if (result.success) {
       s5.stop(`${pc.green('✓')} Dependencies installed`);
     } else {
       s5.stop(`${pc.yellow('⚠')} Dependency installation failed`);
+      if (result.errorMessage) {
+        p.log.warning(pc.dim(`  Reason: ${result.errorMessage.split('\n')[0]}`));
+      }
+      p.log.info(pc.dim(`  You can install manually: cd ${config.name} && ${TEMPLATE_META[config.template].installCmd(config.packageManager)}`));
     }
   }
 

@@ -1,0 +1,10 @@
+# Custom AI Rules
+# Add your team-specific conventions below.
+# These rules will be appended to ALL generated AI context files
+# when you run `prompt-scaffold --inject`.
+#
+# Examples:
+# - Use Zustand for state management, NOT Redux
+# - All API calls go through src/services/ using the custom fetchClient
+# - Component files use PascalCase: MyComponent.tsx
+# - Test files are co-located: MyComponent.test.tsx
