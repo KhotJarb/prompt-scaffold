@@ -6,6 +6,7 @@ dist/
 
 # scaffolded test projects
 pracha-klung/
+pracha-kongsuk/
 
 # environment
 .env
