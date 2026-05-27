@@ -8,10 +8,10 @@
 
 **Every project you create is instantly understood by every AI coding assistant.**
 
-[![npm version](https://img.shields.io/npm/v/prompt-scaffold?style=flat-square&color=cb3837&logo=npm)](https://npmjs.com/package/prompt-scaffold)
-[![downloads](https://img.shields.io/npm/dm/prompt-scaffold?style=flat-square&color=blue&logo=npm)](https://npmjs.com/package/prompt-scaffold)
-[![GitHub stars](https://img.shields.io/github/stars/prompt-scaffold/prompt-scaffold?style=flat-square&color=gold&logo=github)](https://github.com/prompt-scaffold/prompt-scaffold)
-[![license](https://img.shields.io/npm/l/prompt-scaffold?style=flat-square&color=green)](LICENSE)
+[![npm version](https://img.shields.io/badge/npm-v1.0.0-cb3837?style=flat-square&logo=npm)](https://npmjs.com/package/prompt-scaffold)
+[![downloads](https://img.shields.io/badge/downloads-0%2Fmonth-blue?style=flat-square&logo=npm)](https://npmjs.com/package/prompt-scaffold)
+[![GitHub stars](https://img.shields.io/github/stars/KhotJarb/prompt-scaffold?style=flat-square&color=gold&logo=github)](https://github.com/KhotJarb/prompt-scaffold)
+[![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?style=flat-square&logo=typescript)](https://typescriptlang.org)
 [![Node.js](https://img.shields.io/badge/Node.js-≥18-339933?style=flat-square&logo=node.js)](https://nodejs.org)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
@@ -229,7 +229,7 @@ prompt-scaffold/
 
 ```bash
 # Clone the repository
-git clone https://github.com/prompt-scaffold/prompt-scaffold.git
+git clone https://github.com/KhotJarb/prompt-scaffold.git
 cd prompt-scaffold
 
 # Install dependencies
@@ -260,7 +260,7 @@ Contributions are welcome! Here's how you can help:
 
 ## 📄 License
 
-MIT © [prompt-scaffold contributors](https://github.com/prompt-scaffold/prompt-scaffold/graphs/contributors)
+MIT © [prompt-scaffold contributors](https://github.com/KhotJarb/prompt-scaffold/graphs/contributors)
 
 ---
 
