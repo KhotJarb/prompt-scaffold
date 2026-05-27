@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { execSync } from 'node:child_process';
+import os from 'node:os';
 import fs from 'fs-extra';
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
@@ -8,6 +9,20 @@ import { getNextjsFiles } from './templates/nextjs.js';
 import { getFastapiFiles } from './templates/fastapi.js';
 import { getExpressFiles } from './templates/express.js';
 import { generateAIRuleFiles, generateCustomRulesTemplate } from './ai-rules/generator.js';
+
+/**
+ * Returns shell options for execSync that work cross-platform.
+ * On Windows, forces cmd.exe to avoid PowerShell execution policy issues.
+ */
+function getShellOptions(cwd: string, timeout?: number) {
+  const isWindows = os.platform() === 'win32';
+  return {
+    cwd,
+    stdio: 'pipe' as const,
+    shell: isWindows ? 'cmd.exe' : undefined,
+    ...(timeout ? { timeout } : {}),
+  };
+}
 
 /**
  * Template metadata for display purposes.
@@ -122,12 +137,10 @@ MIT
  */
 async function initGitRepo(projectRoot: string): Promise<boolean> {
   try {
-    execSync('git init', { cwd: projectRoot, stdio: 'pipe' });
-    execSync('git add .', { cwd: projectRoot, stdio: 'pipe' });
-    execSync('git commit -m "Initial commit from prompt-scaffold"', {
-      cwd: projectRoot,
-      stdio: 'pipe',
-    });
+    const opts = getShellOptions(projectRoot);
+    execSync('git init', opts);
+    execSync('git add .', opts);
+    execSync('git commit -m "Initial commit from prompt-scaffold"', opts);
     return true;
   } catch {
     return false;
@@ -144,7 +157,7 @@ async function installDependencies(
   try {
     const meta = TEMPLATE_META[config.template];
     const cmd = meta.installCmd(config.packageManager);
-    execSync(cmd, { cwd: projectRoot, stdio: 'pipe', timeout: 120_000 });
+    execSync(cmd, getShellOptions(projectRoot, 120_000));
     return true;
   } catch {
     return false;
