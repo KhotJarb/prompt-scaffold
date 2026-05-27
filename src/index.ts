@@ -7,12 +7,51 @@
  * Cursor, Windsurf, GitHub Copilot, and Claude Code / Antigravity.
  */
 
-import { gatherProjectConfig } from './prompts.js';
-import { scaffoldProject } from './scaffold.js';
+import { parseArgs, printHelp, printVersion } from './cli.js';
+import { gatherProjectConfig, gatherInjectConfig } from './prompts.js';
+import { scaffoldProject, injectRules } from './scaffold.js';
+import { detectTemplate, getTemplateLabel } from './detect.js';
+import pc from 'picocolors';
 
 async function main(): Promise<void> {
   try {
-    const config = await gatherProjectConfig();
+    const args = parseArgs();
+
+    // ── Handle --help ──────────────────────────────────────────
+    if (args.help) {
+      printHelp();
+      process.exit(0);
+    }
+
+    // ── Handle --version ───────────────────────────────────────
+    if (args.version) {
+      printVersion();
+      process.exit(0);
+    }
+
+    // ── Inject Mode ────────────────────────────────────────────
+    if (args.inject) {
+      // Auto-detect stack if template not provided
+      let detectedTemplate = args.template ? null : detectTemplate(process.cwd());
+
+      if (detectedTemplate && !args.template) {
+        console.log(
+          `\n  ${pc.cyan('ℹ')} Auto-detected: ${pc.bold(getTemplateLabel(detectedTemplate))}\n`
+        );
+      }
+
+      const injectConfig = await gatherInjectConfig(args, detectedTemplate);
+
+      if (!injectConfig) {
+        process.exit(1);
+      }
+
+      await injectRules(injectConfig.template);
+      return;
+    }
+
+    // ── Scaffold Mode (default) ────────────────────────────────
+    const config = await gatherProjectConfig(args);
 
     if (!config) {
       process.exit(1);

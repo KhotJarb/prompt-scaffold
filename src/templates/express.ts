@@ -268,5 +268,80 @@ CORS_ORIGIN=http://localhost:5173
 DATABASE_URL=
 `,
     },
+    {
+      path: 'Dockerfile',
+      content: `# --- Build stage ---
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY tsconfig.json ./
+COPY src/ ./src/
+
+RUN npm run build
+
+# --- Runtime stage ---
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 3000
+
+CMD ["node", "dist/index.js"]
+`,
+    },
+    {
+      path: 'src/middleware/logger.ts',
+      content: `import type { Request, Response, NextFunction } from 'express';
+
+// ANSI color codes (no external dependencies)
+const colors = {
+  reset: '\\x1b[0m',
+  dim: '\\x1b[2m',
+  green: '\\x1b[32m',
+  yellow: '\\x1b[33m',
+  red: '\\x1b[31m',
+  cyan: '\\x1b[36m',
+} as const;
+
+function statusColor(status: number): string {
+  if (status >= 500) return colors.red;
+  if (status >= 400) return colors.yellow;
+  if (status >= 300) return colors.cyan;
+  return colors.green;
+}
+
+/**
+ * Simple request logging middleware.
+ * Logs method, URL, status code (colored), and response time in ms.
+ */
+export function logger(req: Request, res: Response, next: NextFunction): void {
+  const start = performance.now();
+
+  res.on('finish', () => {
+    const duration = (performance.now() - start).toFixed(1);
+    const status = res.statusCode;
+    const color = statusColor(status);
+
+    console.log(
+      \`\${colors.dim}\${new Date().toISOString()}\${colors.reset} \` +
+      \`\${req.method} \${req.originalUrl} \` +
+      \`\${color}\${status}\${colors.reset} \` +
+      \`\${colors.dim}\${duration}ms\${colors.reset}\`
+    );
+  });
+
+  next();
+}
+`,
+    },
   ];
 }

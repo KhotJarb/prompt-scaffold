@@ -294,5 +294,82 @@ DATABASE_URL=sqlite:///./app.db
 ALLOWED_ORIGINS=["http://localhost:3000"]
 `,
     },
+    {
+      path: 'Dockerfile',
+      content: `# --- Build stage ---
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# --- Runtime stage ---
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy installed packages from builder
+COPY --from=builder /install /usr/local
+
+# Copy application code
+COPY . .
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+`,
+    },
+    {
+      path: 'tests/conftest.py',
+      content: `"""Shared pytest fixtures for ${projectName}."""
+
+from collections.abc import AsyncGenerator
+
+import pytest
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from app.core.database import Base, get_db
+from app.main import app
+
+# Use an in-memory SQLite database for tests
+TEST_DATABASE_URL = "sqlite:///./test.db"
+
+engine = create_engine(TEST_DATABASE_URL, echo=False)
+TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+@pytest.fixture(autouse=True)
+def setup_database():
+    """Create tables before each test and drop them after."""
+    Base.metadata.create_all(bind=engine)
+    yield
+    Base.metadata.drop_all(bind=engine)
+
+
+def _override_get_db():
+    """Provide a test database session."""
+    db = TestSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+app.dependency_overrides[get_db] = _override_get_db
+
+
+@pytest_asyncio.fixture
+async def client() -> AsyncGenerator[AsyncClient, None]:
+    """Async HTTP client wired to the FastAPI app."""
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
+        yield ac
+`,
+    },
   ];
 }
