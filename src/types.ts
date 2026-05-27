@@ -7,7 +7,6 @@ export interface ProjectConfig {
   template: Template;
   packageManager: PackageManager;
   initGit: boolean;
-  installDeps: boolean;
 }
 
 export interface GeneratedFile {

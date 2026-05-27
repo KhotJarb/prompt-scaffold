@@ -17,7 +17,6 @@ export async function gatherProjectConfig(
   const prefilledTemplate = cliArgs.template;
   const prefilledPM = cliArgs.packageManager;
   const noGit = (cliArgs as CLIArgs & { _noGit?: boolean })._noGit ?? false;
-  const noInstall = (cliArgs as CLIArgs & { _noInstall?: boolean })._noInstall ?? false;
 
   // If everything is pre-filled from CLI args, skip all prompts
   if (prefilledName && prefilledTemplate && prefilledPM) {
@@ -30,7 +29,6 @@ export async function gatherProjectConfig(
       template: prefilledTemplate,
       packageManager: prefilledPM,
       initGit: !noGit,
-      installDeps: !noInstall,
     };
   }
 
@@ -107,14 +105,6 @@ export async function gatherProjectConfig(
           initialValue: true,
         });
       },
-
-      installDeps: () => {
-        if (noInstall) return Promise.resolve(false);
-        return p.confirm({
-          message: 'Install dependencies after scaffolding?',
-          initialValue: true,
-        });
-      },
     },
     {
       onCancel() {
@@ -129,7 +119,6 @@ export async function gatherProjectConfig(
     template: config.template,
     packageManager: config.packageManager,
     initGit: config.initGit,
-    installDeps: config.installDeps,
   };
 }
 

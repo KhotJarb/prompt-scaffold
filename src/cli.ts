@@ -37,7 +37,6 @@ export function printHelp(): void {
     --pm <manager>         Package manager: npm | pnpm | yarn
     --inject               Inject AI rules into an existing project (no scaffolding)
     --no-git               Skip git initialization
-    --no-install           Skip dependency installation
     --help, -h             Show this help message
     --version, -v          Show version number
 
@@ -46,7 +45,7 @@ export function printHelp(): void {
     $ prompt-scaffold --name my-app --template nextjs --pm pnpm
     $ prompt-scaffold --inject
     $ prompt-scaffold --inject --template fastapi
-    $ prompt-scaffold --name api --template express --no-install
+    $ prompt-scaffold --name api --template express --no-git
 `);
 }
 
@@ -68,9 +67,8 @@ export function parseArgs(argv: string[] = process.argv.slice(2)): CLIArgs {
     version: false,
   };
 
-  // Defaults for git and install — undefined means "will prompt"
+  // Default for git — undefined means "will prompt"
   let noGit = false;
-  let noInstall = false;
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -93,10 +91,6 @@ export function parseArgs(argv: string[] = process.argv.slice(2)): CLIArgs {
 
       case '--no-git':
         noGit = true;
-        break;
-
-      case '--no-install':
-        noInstall = true;
         break;
 
       case '--name':
@@ -158,10 +152,9 @@ export function parseArgs(argv: string[] = process.argv.slice(2)): CLIArgs {
     }
   }
 
-  // Store no-git / no-install as inverse booleans on a side channel
-  // These will be used by index.ts to pre-fill config
-  (args as CLIArgs & { _noGit?: boolean; _noInstall?: boolean })._noGit = noGit;
-  (args as CLIArgs & { _noGit?: boolean; _noInstall?: boolean })._noInstall = noInstall;
+  // Store no-git as inverse boolean on a side channel
+  // This will be used by index.ts to pre-fill config
+  (args as CLIArgs & { _noGit?: boolean })._noGit = noGit;
 
   return args;
 }

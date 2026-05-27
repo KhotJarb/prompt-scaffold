@@ -163,26 +163,6 @@ async function initGitRepo(projectRoot: string): Promise<boolean> {
 }
 
 /**
- * Installs project dependencies using the selected package manager.
- * Uses async exec so the spinner keeps animating.
- * Returns { success, errorMessage } for better diagnostics.
- */
-async function installDependencies(
-  projectRoot: string,
-  config: ProjectConfig
-): Promise<{ success: boolean; errorMessage?: string }> {
-  try {
-    const meta = TEMPLATE_META[config.template];
-    const cmd = meta.installCmd(config.packageManager);
-    await execAsync(cmd, projectRoot, 120_000);
-    return { success: true };
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Unknown error';
-    return { success: false, errorMessage: msg };
-  }
-}
-
-/**
  * Injects AI context rule files into an existing project directory.
  * Does not create boilerplate files — only the 4 AI rule files + .aicustomrules template.
  */
@@ -329,26 +309,6 @@ export async function scaffoldProject(config: ProjectConfig): Promise<void> {
     }
   }
 
-  // ── Step 5: Install dependencies ───────────────────────────────
-  let depsInstalled = false;
-  if (config.installDeps) {
-    const s5 = p.spinner();
-    s5.start(`Installing dependencies with ${config.packageManager}... ${pc.dim('(this may take a minute)')}`);
-
-    const result = await installDependencies(projectRoot, config);
-    depsInstalled = result.success;
-
-    if (result.success) {
-      s5.stop(`${pc.green('✓')} Dependencies installed`);
-    } else {
-      s5.stop(`${pc.yellow('⚠')} Dependency installation failed`);
-      if (result.errorMessage) {
-        p.log.warning(pc.dim(`  Reason: ${result.errorMessage.split('\n')[0]}`));
-      }
-      p.log.info(pc.dim(`  You can install manually: cd ${config.name} && ${TEMPLATE_META[config.template].installCmd(config.packageManager)}`));
-    }
-  }
-
   // ── Success Message ────────────────────────────────────────────
   const totalFiles = boilerplateCount + aiRuleCount + 2; // +2 for README + .aicustomrules
 
@@ -360,7 +320,6 @@ export async function scaffoldProject(config: ProjectConfig): Promise<void> {
       `${pc.dim('Pkg Manager:')}  ${config.packageManager}`,
       `${pc.dim('Location:')}     ${pc.underline(projectRoot)}`,
       `${pc.dim('Git:')}          ${gitInitialized ? pc.green('Initialized') : config.initGit ? pc.yellow('Failed') : pc.dim('Skipped')}`,
-      `${pc.dim('Dependencies:')} ${depsInstalled ? pc.green('Installed') : config.installDeps ? pc.yellow('Failed') : pc.dim('Skipped')}`,
       '',
       pc.dim('─────────────────────────────────────────────'),
       '',
@@ -374,26 +333,18 @@ export async function scaffoldProject(config: ProjectConfig): Promise<void> {
     'Project Created Successfully'
   );
 
-  const nextStepsLines = [
-    `${pc.bold('Next steps:')}`,
-    '',
-    `  ${pc.cyan('1.')} cd ${pc.green(config.name)}`,
-  ];
-
-  if (!depsInstalled) {
-    nextStepsLines.push(`  ${pc.cyan('2.')} ${pc.green(meta.installCmd(config.packageManager))}`);
-    nextStepsLines.push(`  ${pc.cyan('3.')} ${pc.green(meta.devCmd(config.packageManager))}`);
-  } else {
-    nextStepsLines.push(`  ${pc.cyan('2.')} ${pc.green(meta.devCmd(config.packageManager))}`);
-  }
-
-  nextStepsLines.push(
-    '',
-    `${pc.dim('Open the project in your favorite AI-powered editor and the')}`,
-    `${pc.dim('context rules will be picked up automatically. Happy coding!')}`,
+  p.log.message(
+    [
+      `${pc.bold('Next steps:')}`,
+      '',
+      `  ${pc.cyan('1.')} cd ${pc.green(config.name)}`,
+      `  ${pc.cyan('2.')} ${pc.green(meta.installCmd(config.packageManager))}`,
+      `  ${pc.cyan('3.')} ${pc.green(meta.devCmd(config.packageManager))}`,
+      '',
+      `${pc.dim('Open the project in your favorite AI-powered editor and the')}`,
+      `${pc.dim('context rules will be picked up automatically. Happy coding!')}`,
+    ].join('\n')
   );
-
-  p.log.message(nextStepsLines.join('\n'));
 
   p.outro(
     `${pc.bgGreen(pc.black(' prompt-scaffold '))} ${pc.green('is ready!')} ${pc.dim('— AI-ready from day one ✨')}`
