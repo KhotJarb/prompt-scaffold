@@ -8,7 +8,7 @@
 
 **Every project you create is instantly understood by every AI coding assistant.**
 
-[![npm version](https://img.shields.io/badge/npm-v1.0.0-cb3837?style=flat-square&logo=npm)](https://npmjs.com/package/prompt-scaffold)
+[![npm version](https://img.shields.io/npm/v/prompt-scaffold?style=flat-square&color=cb3837&logo=npm)](https://npmjs.com/package/prompt-scaffold)
 [![GitHub stars](https://img.shields.io/github/stars/KhotJarb/prompt-scaffold?style=flat-square&color=gold&logo=github)](https://github.com/KhotJarb/prompt-scaffold)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?style=flat-square&logo=typescript)](https://typescriptlang.org)

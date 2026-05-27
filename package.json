@@ -1,6 +1,6 @@
 {
   "name": "prompt-scaffold",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Universal AI-ready project scaffolder — generates projects with built-in context rules for Cursor, Windsurf, Copilot, and Claude Code.",
   "type": "module",
   "main": "./dist/index.js",
@@ -29,6 +29,14 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KhotJarb/prompt-scaffold.git"
+  },
+  "homepage": "https://github.com/KhotJarb/prompt-scaffold#readme",
+  "bugs": {
+    "url": "https://github.com/KhotJarb/prompt-scaffold/issues"
+  },
   "dependencies": {
     "@clack/prompts": "^0.10.0",
     "fs-extra": "^11.3.0",
