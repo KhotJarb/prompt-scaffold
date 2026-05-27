@@ -2,12 +2,15 @@ export type Template = 'nextjs' | 'react-vite' | 'express' | 'nestjs' | 'fastapi
 
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
+export type CICDProvider = 'github' | 'none';
+
 export interface ProjectConfig {
   name: string;
   template: Template;
   packageManager: PackageManager;
   initGit: boolean;
   outputDir?: string;
+  cicd: CICDProvider;
 }
 
 export interface GeneratedFile {
@@ -26,9 +29,12 @@ export interface CLIArgs {
   template?: Template;
   packageManager?: PackageManager;
   inject: boolean;
+  update: boolean;
   help: boolean;
   version: boolean;
   outputDir?: string;
+  dryRun: boolean;
+  cicd?: CICDProvider;
 }
 
 /** Templates that are valid for selection */
@@ -42,3 +48,13 @@ export const NODE_TEMPLATES: Template[] = ['nextjs', 'react-vite', 'express', 'n
 
 /** Templates that use Python (pip) */
 export const PYTHON_TEMPLATES: Template[] = ['fastapi', 'django'];
+
+/** Human-readable labels for all templates */
+export const TEMPLATE_LABELS: Record<Template, string> = {
+  nextjs: 'Next.js App Router',
+  'react-vite': 'React + Vite SPA',
+  fastapi: 'Python FastAPI',
+  django: 'Python Django',
+  express: 'Node.js Express API',
+  nestjs: 'NestJS API',
+};

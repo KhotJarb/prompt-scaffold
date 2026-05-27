@@ -343,5 +343,50 @@ export function logger(req: Request, res: Response, next: NextFunction): void {
 }
 `,
     },
+    {
+      path: '.prettierrc',
+      content: `{
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "printWidth": 100,
+  "bracketSpacing": true
+}
+`,
+    },
+    {
+      path: '.editorconfig',
+      content: `root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+`,
+    },
+    {
+      path: '.eslintrc.json',
+      content: JSON.stringify(
+        {
+          env: { node: true, es2024: true },
+          extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
+          parser: '@typescript-eslint/parser',
+          parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
+          rules: {
+            '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+            'prefer-const': 'error',
+          },
+        },
+        null,
+        2
+      ),
+    },
   ];
 }

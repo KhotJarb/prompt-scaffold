@@ -301,5 +301,47 @@ export default function NotFound() {
 }
 `,
     },
+    {
+      path: '.prettierrc',
+      content: `{
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "printWidth": 100,
+  "bracketSpacing": true
+}
+`,
+    },
+    {
+      path: '.editorconfig',
+      content: `root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+`,
+    },
+    {
+      path: '.eslintrc.json',
+      content: JSON.stringify(
+        {
+          extends: ['next/core-web-vitals', 'next/typescript', 'prettier'],
+          rules: {
+            '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+            'prefer-const': 'error',
+          },
+        },
+        null,
+        2
+      ),
+    },
   ];
 }

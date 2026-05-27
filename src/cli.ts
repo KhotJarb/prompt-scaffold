@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { CLIArgs, Template, PackageManager } from './types.js';
+import type { CLIArgs, Template, PackageManager, CICDProvider } from './types.js';
 import { TEMPLATE_VALUES, PACKAGE_MANAGER_VALUES } from './types.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -31,23 +31,30 @@ export function printHelp(): void {
   USAGE
     $ prompt-scaffold [options]
 
+  COMMANDS
+    (default)              Scaffold a new project
+    --inject               Inject AI rules into an existing project
+    --update               Update AI rules to the latest version
+
   OPTIONS
     --name <name>          Project name (lowercase, hyphens, dots, underscores)
     --template <template>  Template: nextjs | react-vite | express | nestjs | fastapi | django
     --pm <manager>         Package manager: npm | pnpm | yarn | bun
     --output <path>        Output directory (default: current directory)
-    --inject               Inject AI rules into an existing project (no scaffolding)
+    --cicd <provider>      CI/CD pipeline: github | none (default: prompt)
     --no-git               Skip git initialization
+    --dry-run              Preview files without writing to disk
     --help, -h             Show this help message
     --version, -v          Show version number
 
   EXAMPLES
     $ prompt-scaffold
     $ prompt-scaffold --name my-app --template nextjs --pm pnpm
-    $ prompt-scaffold --name api --template nestjs --pm bun
+    $ prompt-scaffold --name api --template nestjs --pm bun --cicd github
     $ prompt-scaffold --output ~/projects --name my-app --template react-vite
+    $ prompt-scaffold --dry-run --name test --template express --pm npm
     $ prompt-scaffold --inject
-    $ prompt-scaffold --inject --template django
+    $ prompt-scaffold --update
 `);
 }
 
@@ -65,8 +72,10 @@ export function printVersion(): void {
 export function parseArgs(argv: string[] = process.argv.slice(2)): CLIArgs {
   const args: CLIArgs = {
     inject: false,
+    update: false,
     help: false,
     version: false,
+    dryRun: false,
   };
 
   // Default for git — undefined means "will prompt"
@@ -89,6 +98,14 @@ export function parseArgs(argv: string[] = process.argv.slice(2)): CLIArgs {
 
       case '--inject':
         args.inject = true;
+        break;
+
+      case '--update':
+        args.update = true;
+        break;
+
+      case '--dry-run':
+        args.dryRun = true;
         break;
 
       case '--no-git':
@@ -131,6 +148,16 @@ export function parseArgs(argv: string[] = process.argv.slice(2)): CLIArgs {
         }
         break;
 
+      case '--cicd':
+        if (next && ['github', 'none'].includes(next)) {
+          args.cicd = next as CICDProvider;
+          i++;
+        } else if (next) {
+          console.error(`Invalid CI/CD provider: "${next}". Must be one of: github, none`);
+          process.exit(1);
+        }
+        break;
+
       default:
         // Handle --key=value syntax
         if (arg.startsWith('--') && arg.includes('=')) {
@@ -159,6 +186,14 @@ export function parseArgs(argv: string[] = process.argv.slice(2)): CLIArgs {
             case '--output':
             case '-o':
               args.outputDir = val;
+              break;
+            case '--cicd':
+              if (['github', 'none'].includes(val)) {
+                args.cicd = val as CICDProvider;
+              } else {
+                console.error(`Invalid CI/CD provider: "${val}". Must be one of: github, none`);
+                process.exit(1);
+              }
               break;
           }
         }

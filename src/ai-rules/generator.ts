@@ -1,4 +1,5 @@
 import type { Template, GeneratedFile } from '../types.js';
+import { TEMPLATE_LABELS } from '../types.js';
 import { getRulesForTemplate } from './rules-content.js';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -57,12 +58,7 @@ export function generateAIRuleFiles(
 ): GeneratedFile[] {
   const rules = getRulesForTemplate(template);
 
-  const templateLabel =
-    template === 'nextjs'
-      ? 'Next.js App Router'
-      : template === 'fastapi'
-        ? 'Python FastAPI'
-        : 'Node.js Express API';
+  const templateLabel = TEMPLATE_LABELS[template];
 
   // Read custom rules if project root is provided
   let customSection = '';

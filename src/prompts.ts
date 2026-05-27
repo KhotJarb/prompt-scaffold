@@ -2,25 +2,15 @@ import path from 'node:path';
 import os from 'node:os';
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
-import type { ProjectConfig, Template, PackageManager, CLIArgs } from './types.js';
-import { PYTHON_TEMPLATES } from './types.js';
-
-/**
- * Returns the appropriate install command for the template.
- */
-function getInstallCmd(template: Template, pm: PackageManager): string {
-  if (PYTHON_TEMPLATES.includes(template)) {
-    return 'pip install -r requirements.txt';
-  }
-  return `${pm} install`;
-}
+import type { ProjectConfig, Template, PackageManager, CICDProvider, CLIArgs } from './types.js';
+import { PYTHON_TEMPLATES, TEMPLATE_LABELS } from './types.js';
 
 /**
  * Runs the interactive CLI prompts to gather project configuration.
  * Supports partial pre-filling from CLI args — only prompts for missing values.
  */
 export async function gatherProjectConfig(
-  cliArgs: CLIArgs = { inject: false, help: false, version: false }
+  cliArgs: CLIArgs = { inject: false, update: false, help: false, version: false, dryRun: false }
 ): Promise<ProjectConfig | null> {
   p.intro(
     `${pc.bgCyan(pc.black(' prompt-scaffold '))} ${pc.dim('— Universal AI-Ready Project Scaffolder')}`
@@ -30,6 +20,7 @@ export async function gatherProjectConfig(
   const prefilledTemplate = cliArgs.template;
   const prefilledPM = cliArgs.packageManager;
   const prefilledOutput = cliArgs.outputDir;
+  const prefilledCICD = cliArgs.cicd;
   const noGit = (cliArgs as CLIArgs & { _noGit?: boolean })._noGit ?? false;
 
   // If everything is pre-filled from CLI args, skip all prompts
@@ -44,6 +35,7 @@ export async function gatherProjectConfig(
       packageManager: prefilledPM,
       initGit: !noGit,
       outputDir: prefilledOutput,
+      cicd: prefilledCICD ?? 'none',
     };
   }
 
@@ -79,7 +71,6 @@ export async function gatherProjectConfig(
         return p.select<Template>({
           message: 'Which template would you like to use?',
           options: [
-            // ── Frontend ─────────────────
             {
               value: 'nextjs' as const,
               label: `${pc.cyan('▲')} Next.js Web App`,
@@ -90,7 +81,6 @@ export async function gatherProjectConfig(
               label: `${pc.cyan('⚛')} React + Vite`,
               hint: 'SPA + Tailwind CSS + TypeScript',
             },
-            // ── Backend ──────────────────
             {
               value: 'express' as const,
               label: `${pc.yellow('🚂')} Express API`,
@@ -178,6 +168,30 @@ export async function gatherProjectConfig(
         });
       },
 
+      cicd: () => {
+        if (prefilledCICD) {
+          if (prefilledCICD !== 'none') {
+            p.log.info(`${pc.dim('CI/CD:')} ${pc.bold('GitHub Actions')}`);
+          }
+          return Promise.resolve(prefilledCICD);
+        }
+        return p.select<CICDProvider>({
+          message: 'Generate a CI/CD pipeline?',
+          options: [
+            {
+              value: 'github' as const,
+              label: `${pc.white('⚙')} GitHub Actions`,
+              hint: 'Build + Lint + Test workflow',
+            },
+            {
+              value: 'none' as const,
+              label: `${pc.dim('✗')} Skip`,
+              hint: 'No CI/CD pipeline',
+            },
+          ],
+        });
+      },
+
       initGit: () => {
         if (noGit) return Promise.resolve(false);
         return p.confirm({
@@ -203,6 +217,7 @@ export async function gatherProjectConfig(
     packageManager: config.packageManager as PackageManager,
     initGit: config.initGit,
     outputDir: resolvedOutput as string | undefined,
+    cicd: config.cicd as CICDProvider,
   };
 }
 
@@ -211,7 +226,7 @@ export async function gatherProjectConfig(
  * Optionally pre-fills with a detected or CLI-provided template.
  */
 export async function gatherInjectConfig(
-  cliArgs: CLIArgs = { inject: true, help: false, version: false },
+  cliArgs: CLIArgs = { inject: true, update: false, help: false, version: false, dryRun: false },
   detectedTemplate?: Template | null
 ): Promise<{ template: Template } | null> {
   p.intro(
@@ -226,17 +241,8 @@ export async function gatherInjectConfig(
 
   // If auto-detected, confirm with user
   if (detectedTemplate) {
-    const labels: Record<Template, string> = {
-      nextjs: 'Next.js App Router',
-      'react-vite': 'React + Vite SPA',
-      fastapi: 'Python FastAPI',
-      express: 'Node.js Express API',
-      nestjs: 'NestJS API',
-      django: 'Python Django',
-    };
-
     const confirmed = await p.confirm({
-      message: `Detected ${pc.bold(pc.cyan(labels[detectedTemplate]))} project. Use this template?`,
+      message: `Detected ${pc.bold(pc.cyan(TEMPLATE_LABELS[detectedTemplate]))} project. Use this template?`,
       initialValue: true,
     });
 

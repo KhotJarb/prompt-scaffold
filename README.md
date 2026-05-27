@@ -1,360 +1,181 @@
-<div align="center">
+# prompt-scaffold
 
-<img src="https://img.shields.io/badge/prompt--scaffold-v1.0.3-blueviolet?style=for-the-badge&logo=rocket" alt="version" />
+> 🏗️ **Universal AI-Ready Project Scaffolder** — Generate projects with built-in context rules for **Cursor**, **Windsurf**, **GitHub Copilot**, and **Claude Code / Antigravity**.
 
-# 🏗️ prompt-scaffold
-
-### Universal AI-Ready Project Scaffolder
-
-**Every project you create is instantly understood by every AI coding assistant.**
-
-[![npm version](https://img.shields.io/npm/v/prompt-scaffold?style=flat-square&color=cb3837&logo=npm)](https://npmjs.com/package/prompt-scaffold)
-[![GitHub stars](https://img.shields.io/github/stars/KhotJarb/prompt-scaffold?style=flat-square&color=gold&logo=github)](https://github.com/KhotJarb/prompt-scaffold)
-[![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?style=flat-square&logo=typescript)](https://typescriptlang.org)
-[![Node.js](https://img.shields.io/badge/Node.js-≥18-339933?style=flat-square&logo=node.js)](https://nodejs.org)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
-
-<br />
-
-[**Getting Started**](#-getting-started) · [**Why prompt-scaffold?**](#-why-prompt-scaffold) · [**Templates**](#-templates) · [**AI Rules**](#-universal-ai-context-rules) · [**CLI Reference**](#-cli-reference) · [**Contributing**](#-contributing)
-
-<br />
-
-<img width="680" alt="prompt-scaffold demo" src="https://img.shields.io/badge/demo-interactive_CLI-8A2BE2?style=for-the-badge&logo=windowsterminal&logoColor=white" />
-
-</div>
+[![npm version](https://img.shields.io/npm/v/prompt-scaffold)](https://www.npmjs.com/package/prompt-scaffold)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## 🤔 The Problem
+## Why prompt-scaffold?
 
-You start a new project. You open your AI coding assistant — Cursor, Windsurf, Copilot, Claude Code — and ask it to write a component. It generates:
+Every AI coding assistant works better when it understands your project. `prompt-scaffold` generates **stack-specific AI context rules** alongside your boilerplate, so AI assistants write code that follows your architecture from the very first prompt.
 
-- ❌ Pages Router code when you're using App Router
-- ❌ `any` types when you enforce strict TypeScript
-- ❌ CSS modules when you're using Tailwind
-- ❌ CommonJS `require()` when you're using ES Modules
-- ❌ SQLAlchemy 1.x patterns when you're on 2.0
+### 🎯 6 Templates
 
-**The AI doesn't know your architecture.** Every time, you're correcting, re-prompting, and wasting time.
+| Template | Stack | Use Case |
+|----------|-------|----------|
+| **Next.js** | App Router + Tailwind + TS | Full-stack web apps |
+| **React + Vite** | React 19 + Vite + Tailwind + TS | Single-page applications |
+| **Express** | Express 5 + TypeScript + Zod | REST APIs (Node.js) |
+| **NestJS** | NestJS 10 + TypeScript + Decorators | Enterprise APIs (Node.js) |
+| **FastAPI** | Python + Pydantic + SQLAlchemy | REST APIs (Python) |
+| **Django** | Django 5 + REST Framework + ORM | Full-stack web apps (Python) |
 
-## 💡 The Solution
+### 🤖 4 AI Context Files
 
-**prompt-scaffold** doesn't just create boilerplate — it generates **Universal AI Context Rules**. These are instruction files that every major AI coding tool reads automatically, ensuring the AI writes code that matches your *exact* architecture from the very first prompt.
-
-```
-my-project/
-├── .cursorrules                          # ← Cursor reads this
-├── .windsurfrules                        # ← Windsurf reads this
-├── .github/copilot-instructions.md       # ← GitHub Copilot reads this
-├── AI_INSTRUCTIONS.md                    # ← Claude Code / Antigravity reads this
-├── .aicustomrules                        # ← Your team's custom rules
-├── src/                                  # ← Your actual project files
-└── ...
-```
-
-> **One scaffold. Every AI tool. Zero miscommunication.**
+| File | AI Tool |
+|------|---------|
+| `.cursorrules` | Cursor IDE |
+| `.windsurfrules` | Windsurf IDE |
+| `.github/copilot-instructions.md` | GitHub Copilot |
+| `AI_INSTRUCTIONS.md` | Claude Code, Antigravity, and other CLI agents |
 
 ---
 
-## ✨ Features
-
-| Feature | Description |
-|---------|-------------|
-| 🎯 **Universal AI Rules** | Auto-generates context files for Cursor, Windsurf, Copilot, and Claude Code |
-| 💉 **Inject Mode** | Add AI rules to **existing projects** without scaffolding — `--inject` |
-| 🧠 **Auto-Detect Stack** | Automatically detects your project's tech stack from config files |
-| 📦 **3 Production Templates** | Next.js App Router, Python FastAPI, Node.js Express API |
-| 🎨 **Beautiful CLI** | Powered by `@clack/prompts` — gorgeous interactive terminal UI |
-| ⚡ **Non-Interactive Mode** | Full CLI flags for scripting and CI/CD: `--name`, `--template`, `--pm` |
-| 🔧 **Post-Scaffold Automation** | Optional git init and dependency installation built-in |
-| 🎛️ **Custom Rules Layer** | `.aicustomrules` file for team-specific conventions that survive re-injection |
-| 🐳 **Docker Support** | Dockerfiles included for FastAPI and Express templates |
-| 🔒 **Strict Standards** | TypeScript strict mode, Zod validation, Pydantic models — built-in |
-
----
-
-## 🚀 Getting Started
-
-### Installation
+## Quick Start
 
 ```bash
-# Use directly with npx (no install needed)
 npx prompt-scaffold
-
-# Or install globally
-npm install -g prompt-scaffold
-
-# Then run anywhere
-prompt-scaffold
 ```
 
-### Interactive Mode (Default)
+That's it! Follow the interactive prompts to:
+
+1. **Name** your project
+2. **Choose** a template (Next.js, React+Vite, Express, NestJS, FastAPI, Django)
+3. **Select** a package manager (npm, pnpm, yarn, bun)
+4. **Pick** an output directory (current dir, Desktop, or custom path)
+5. **Generate CI/CD** (GitHub Actions or skip)
+6. **Init git** (optional)
+7. **Open in editor** (VS Code or Cursor)
+
+## CLI Flags
+
+Skip the prompts with flags for CI/CD or quick scaffolding:
 
 ```bash
-prompt-scaffold
-```
-
-The interactive CLI will guide you through:
-
-1. **📝 Project Name** — validated for npm compatibility
-2. **🎯 Template Selection** — choose your stack
-3. **📦 Package Manager** — npm, pnpm, or yarn
-4. **🔧 Git Init** — initialize a git repository
-5. **📥 Install Dependencies** — auto-install after scaffolding
-
-### Non-Interactive Mode
-
-```bash
-# Fully scripted — no prompts at all
+# Full non-interactive mode
 prompt-scaffold --name my-app --template nextjs --pm pnpm
 
-# Skip git and dep install
-prompt-scaffold --name my-api --template express --pm npm --no-git --no-install
+# With GitHub Actions CI pipeline
+prompt-scaffold --name my-app --template nestjs --pm bun --cicd github
+
+# Custom output directory
+prompt-scaffold --name my-app --template react-vite --output ~/projects
+
+# Preview what files would be generated (no writing)
+prompt-scaffold --dry-run --name test --template express --pm npm
+
+# Update AI rules in an existing project
+prompt-scaffold --update
 ```
 
-### Quick Start After Scaffolding
+### All Flags
 
-```bash
-# Next.js / Express
-cd my-project
-npm install    # (skipped if you chose auto-install)
-npm run dev
-
-# FastAPI
-cd my-project
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
+| Flag | Description |
+|------|-------------|
+| `--name <name>` | Project name |
+| `--template <t>` | Template: `nextjs`, `react-vite`, `express`, `nestjs`, `fastapi`, `django` |
+| `--pm <pm>` | Package manager: `npm`, `pnpm`, `yarn`, `bun` |
+| `--output <path>` | Output directory (default: current directory) |
+| `--cicd <provider>` | CI/CD pipeline: `github`, `none` |
+| `--inject` | Inject AI rules into existing project |
+| `--update` | Update AI rules to latest version |
+| `--dry-run` | Preview files without writing to disk |
+| `--no-git` | Skip git initialization |
+| `--help`, `-h` | Show help |
+| `--version`, `-v` | Show version |
 
 ---
 
-## 💉 Inject Mode — Add AI Rules to Existing Projects
+## Commands
 
-This is the **game-changer**. You don't need to start a new project to benefit from prompt-scaffold. Add AI context rules to any existing project:
+### Scaffold (default)
+```bash
+npx prompt-scaffold
+```
+Creates a new project with boilerplate, AI rules, linting configs, and optionally CI/CD.
 
+### Inject
 ```bash
 cd my-existing-project
-prompt-scaffold --inject
+npx prompt-scaffold --inject
 ```
+Auto-detects your stack and injects AI context rules without scaffolding boilerplate.
 
-### What Happens
-
-1. **Auto-detects** your tech stack (Next.js, FastAPI, or Express)
-2. **Confirms** the detected stack with you
-3. **Generates** the 4 AI rule files + `.aicustomrules` template
-4. **Warns** before overwriting any existing rule files
-
-### Specify the Stack
-
+### Update
 ```bash
-# Skip auto-detection
-prompt-scaffold --inject --template fastapi
+cd my-existing-project
+npx prompt-scaffold --update
 ```
+Updates AI rule files to the latest version. Auto-detects stack, preserves `.aicustomrules`.
 
-### Custom Rules
-
-Add team-specific conventions that persist across re-injections:
-
+### Dry Run
 ```bash
-# 1. Edit your custom rules
-echo "- Use Zustand for state management" >> .aicustomrules
-
-# 2. Re-inject to merge custom rules into all AI files
-prompt-scaffold --inject
+npx prompt-scaffold --dry-run --name my-app --template nextjs --pm pnpm
 ```
-
-Your `.aicustomrules` content is appended to all 4 generated AI rule files automatically.
+Preview all files that would be generated with sizes, without writing anything.
 
 ---
 
-## 📦 Templates
+## What's Included
 
-### ▲ Next.js Web App
+Every scaffolded project comes with:
 
-> App Router · TypeScript · Tailwind CSS v4
-
-- Next.js 15 with App Router (NOT Pages Router)
-- React Server Components by default
-- Tailwind CSS v4 with PostCSS
-- TypeScript strict mode
-- API Route Handlers
-- `layout.tsx` / `page.tsx` / `loading.tsx` / `error.tsx` / `not-found.tsx`
-- SEO-ready with Metadata API
-
-### ⚡ Python FastAPI
-
-> FastAPI · Pydantic v2 · SQLAlchemy 2.0 · Alembic · Docker
-
-- FastAPI with async support
-- Pydantic v2 for request/response validation
-- SQLAlchemy 2.0 with DeclarativeBase
-- Dependency injection patterns
-- Test suite with pytest + httpx fixtures
-- Multi-stage Dockerfile
-- Ruff linting + mypy strict mode
-
-### 🚂 Node.js Express API
-
-> Express 5 · TypeScript · Zod · ES Modules · Docker
-
-- Express 5 with TypeScript
-- Zod validation middleware
-- ES Modules (no CommonJS)
-- Helmet + CORS security
-- Centralized error handling
-- Request logging middleware
-- Multi-stage Dockerfile
-- Environment validation at startup
+| Category | Files |
+|----------|-------|
+| **Boilerplate** | Full project structure per template |
+| **AI Rules** | `.cursorrules`, `.windsurfrules`, `.github/copilot-instructions.md`, `AI_INSTRUCTIONS.md` |
+| **Custom Rules** | `.aicustomrules` template for team conventions |
+| **Linting** | ESLint + Prettier (Node.js) or ruff (Python) + `.editorconfig` |
+| **CI/CD** | GitHub Actions workflow (optional) |
+| **Docker** | Dockerfile (Express, NestJS, FastAPI, Django) |
+| **Git** | `.gitignore` + initial commit (optional) |
 
 ---
 
-## 🧠 Universal AI Context Rules
+## Custom Rules
 
-This is **the magic** ✨ — and the reason prompt-scaffold exists.
-
-When you scaffold a project, 5 AI instruction files are generated automatically:
-
-| File | Tool | How It Works |
-|------|------|-------------|
-| `.cursorrules` | **Cursor** | Cursor automatically reads this from your project root |
-| `.windsurfrules` | **Windsurf** | Windsurf automatically reads this from your project root |
-| `.github/copilot-instructions.md` | **GitHub Copilot** | Copilot reads instructions from `.github/` |
-| `AI_INSTRUCTIONS.md` | **Claude Code / Antigravity** | CLI agents read markdown context files |
-| `.aicustomrules` | **All tools** | Your custom rules, merged into all files on `--inject` |
-
-### What's Inside the Rules?
-
-Each file contains **deeply stack-specific** guidelines:
-
-- 📁 **Project Structure** — exact folder conventions and file naming
-- 🏗️ **Architecture Patterns** — layered architecture, dependency injection, etc.
-- 📝 **Coding Standards** — type safety, naming conventions, import styles
-- 🔐 **Security** — input validation, env vars, secret handling
-- ⚡ **Performance** — caching, optimization, lazy loading
-- 🧪 **Testing** — test patterns, mocking, coverage expectations
-- 🚫 **Anti-Patterns** — explicit "do NOT do this" rules
-
-### Example: What the AI Learns
-
-For a **Next.js** project, the AI will know:
+Add your team's conventions to `.aicustomrules`:
 
 ```
-✅ Use App Router (not Pages Router)
-✅ Default to Server Components
-✅ Only add 'use client' when hooks/events are needed
-✅ Use next/image for all images
-✅ Use Metadata API for SEO
-✅ Fetch data in Server Components with async/await
-✅ Use Server Actions for mutations
-❌ Never use getServerSideProps (that's Pages Router)
-❌ Never use CSS modules (use Tailwind)
-❌ Never use 'any' type
+# .aicustomrules
+- Use Zustand for state management, not Redux
+- All API responses must include request_id
+- Use ISO 8601 for all date formats
 ```
+
+When you re-run `prompt-scaffold --inject` or `--update`, your custom rules are **automatically merged** into all AI context files.
 
 ---
 
-## 📖 CLI Reference
+## Changelog
 
-```
-USAGE
-  $ prompt-scaffold [options]
+### v1.0.5
+- **`prompt-scaffold --update`**: Update AI rules to latest version in existing projects
+- **`--dry-run` mode**: Preview all files without writing to disk
+- **GitHub Actions CI/CD**: Stack-aware CI pipeline generation
+- **ESLint + Prettier**: Auto-configured for all Node.js templates
+- **ruff**: Modern Python linting for FastAPI and Django templates
+- **`.editorconfig`**: Consistent editor settings for all templates
+- **Open in editor**: Post-scaffold prompt to open in VS Code or Cursor
+- **Bug fix**: AI rule file labels now correct for all 6 templates
 
-OPTIONS
-  --name <name>          Project name
-  --template <template>  Template: nextjs | fastapi | express
-  --pm <manager>         Package manager: npm | pnpm | yarn
-  --inject               Inject AI rules into an existing project
-  --no-git               Skip git initialization
-  --no-install           Skip dependency installation
-  --help, -h             Show help message
-  --version, -v          Show version number
+### v1.0.4
+- 3 new templates: React + Vite, NestJS, Django
+- Custom output directory (`--output` flag)
+- bun package manager support
+- Smart PM prompt skipping for Python templates
 
-EXAMPLES
-  $ prompt-scaffold
-  $ prompt-scaffold --name my-app --template nextjs --pm pnpm
-  $ prompt-scaffold --inject
-  $ prompt-scaffold --inject --template fastapi
-  $ prompt-scaffold --name api --template express --no-install
-```
+### v1.0.3
+- Manual dependency installation for reliability
+- Async spinners for smoother UX
 
----
-
-## 🏗️ Architecture
-
-```
-prompt-scaffold/
-├── src/
-│   ├── index.ts              # CLI entry point & routing
-│   ├── cli.ts                # Argument parser (--inject, --name, etc.)
-│   ├── detect.ts             # Auto-detect project stack
-│   ├── prompts.ts            # Interactive prompts (@clack/prompts)
-│   ├── scaffold.ts           # Orchestrator: scaffold + inject modes
-│   ├── types.ts              # Shared TypeScript types
-│   ├── templates/
-│   │   ├── nextjs.ts         # Next.js boilerplate files
-│   │   ├── fastapi.ts        # FastAPI boilerplate files
-│   │   └── express.ts        # Express boilerplate files
-│   └── ai-rules/
-│       ├── generator.ts      # AI rule file generator + custom rules
-│       └── rules-content.ts  # Stack-specific rule content
-├── package.json
-├── tsconfig.json
-└── README.md
-```
+### v1.0.2
+- Inject mode, CLI flags, auto-detect, enhanced templates
 
 ---
 
-## 🛠️ Development
+## License
 
-```bash
-# Clone the repository
-git clone https://github.com/KhotJarb/prompt-scaffold.git
-cd prompt-scaffold
-
-# Install dependencies
-npm install
-
-# Run in development mode
-npm run dev
-
-# Build for production
-npm run build
-
-# Test the built CLI
-node dist/index.js
-```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Here's how you can help:
-
-- 🆕 **Add Templates** — Vue, Django, Go, Rust, etc.
-- 📝 **Improve AI Rules** — more nuanced, more specific, more helpful
-- 🐛 **Bug Reports** — open an issue with reproduction steps
-- 💡 **Feature Ideas** — suggest new features in discussions
-
----
-
-## 📄 License
-
-MIT © [prompt-scaffold contributors](https://github.com/KhotJarb/prompt-scaffold/graphs/contributors)
-
----
-
-<div align="center">
-
-**Built for developers who build with AI.**
-
-Made with ❤️ and TypeScript.
-
-<br />
-
-<a href="https://npmjs.com/package/prompt-scaffold">
-  <img src="https://img.shields.io/badge/Install_Now-npm_i_--g_prompt--scaffold-cb3837?style=for-the-badge&logo=npm&logoColor=white" alt="Install Now" />
-</a>
-
-</div>
+MIT © [KhotJarb](https://github.com/KhotJarb)

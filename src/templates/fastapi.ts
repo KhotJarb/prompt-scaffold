@@ -371,5 +371,54 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
         yield ac
 `,
     },
+    {
+      path: 'ruff.toml',
+      content: `# Ruff — Fast Python Linter & Formatter
+# Docs: https://docs.astral.sh/ruff/
+
+target-version = "py311"
+line-length = 88
+
+[lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "SIM",   # flake8-simplify
+    "TCH",   # flake8-type-checking
+]
+ignore = ["E501"]
+
+[lint.isort]
+known-first-party = ["app"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+`,
+    },
+    {
+      path: '.editorconfig',
+      content: `root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{json,yml,yaml,toml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+`,
+    },
   ];
 }

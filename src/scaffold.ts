@@ -5,7 +5,7 @@ import fs from 'fs-extra';
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
 import type { ProjectConfig, Template, GeneratedFile } from './types.js';
-import { PYTHON_TEMPLATES } from './types.js';
+import { PYTHON_TEMPLATES, TEMPLATE_LABELS } from './types.js';
 import { getNextjsFiles } from './templates/nextjs.js';
 import { getReactViteFiles } from './templates/react-vite.js';
 import { getFastapiFiles } from './templates/fastapi.js';
@@ -13,10 +13,10 @@ import { getExpressFiles } from './templates/express.js';
 import { getNestjsFiles } from './templates/nestjs.js';
 import { getDjangoFiles } from './templates/django.js';
 import { generateAIRuleFiles, generateCustomRulesTemplate } from './ai-rules/generator.js';
+import { generateCICDFiles } from './cicd.js';
 
 /**
  * Promisified exec that uses cmd.exe on Windows to avoid PowerShell issues.
- * Returns { stdout, stderr } on success, or throws with stderr on failure.
  */
 function execAsync(
   cmd: string,
@@ -172,20 +172,26 @@ This project includes **Universal AI Context Rules** — pre-configured instruct
 that ensure any AI coding assistant understands your project architecture:
 
 | File | AI Tool |
-|------|---------|
+|------|---------| 
 | \`.cursorrules\` | Cursor IDE |
 | \`.windsurfrules\` | Windsurf IDE |
 | \`.github/copilot-instructions.md\` | GitHub Copilot |
 | \`AI_INSTRUCTIONS.md\` | Claude Code, Antigravity, and other CLI agents |
 
-These files contain stack-specific coding standards, project structure rules,
-and best practices that guide AI assistants to write code consistent with your architecture.
-
 ### Custom Rules
 
 Add your team-specific conventions to \`.aicustomrules\`. When you re-run
 \`prompt-scaffold --inject\`, your custom rules will be appended to all AI context files.
+${config.cicd === 'github' ? `
+## CI/CD
 
+This project includes a GitHub Actions workflow (\`.github/workflows/ci.yml\`)
+that runs on every push and pull request to \`main\`. It will:
+- Install dependencies
+- Run linting
+- Run type checking
+- Build the project
+` : ''}
 ## Project Structure
 
 See \`AI_INSTRUCTIONS.md\` for the full project structure and coding standards.
@@ -199,7 +205,6 @@ MIT
 
 /**
  * Initializes a git repository and creates an initial commit.
- * Uses async exec so the spinner keeps animating.
  */
 async function initGitRepo(projectRoot: string): Promise<boolean> {
   try {
@@ -213,8 +218,109 @@ async function initGitRepo(projectRoot: string): Promise<boolean> {
 }
 
 /**
+ * Formats file size in human-readable format.
+ */
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  return `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+/**
+ * Dry-run mode — previews all files that would be generated without writing.
+ */
+export async function dryRunProject(config: ProjectConfig): Promise<void> {
+  const meta = TEMPLATE_META[config.template];
+
+  p.intro(
+    `${pc.bgBlue(pc.white(' DRY RUN '))} ${pc.dim('— Preview mode (no files will be written)')}`
+  );
+
+  // Collect all files
+  const allFiles: GeneratedFile[] = [
+    ...getTemplateFiles(config),
+    ...generateAIRuleFiles(config.template),
+    generateProjectReadme(config),
+    generateCustomRulesTemplate(),
+  ];
+
+  if (config.cicd === 'github') {
+    allFiles.push(...generateCICDFiles(config.template));
+  }
+
+  // Calculate total size
+  const totalBytes = allFiles.reduce((sum, f) => sum + Buffer.byteLength(f.content, 'utf-8'), 0);
+
+  // Build tree display
+  const tree = allFiles
+    .sort((a, b) => a.path.localeCompare(b.path))
+    .map(f => {
+      const size = Buffer.byteLength(f.content, 'utf-8');
+      return `  ${pc.dim('├─')} ${pc.cyan(f.path)}  ${pc.dim(`(${formatSize(size)})`)}`;
+    });
+
+  // Replace last item prefix
+  if (tree.length > 0) {
+    const lastItem = tree[tree.length - 1];
+    tree[tree.length - 1] = lastItem.replace('├─', '└─');
+  }
+
+  p.note(
+    [
+      `${pc.bold(pc.green(`${meta.icon} ${config.name}`))}`,
+      '',
+      `${pc.dim('Template:')}     ${meta.color(meta.label)}`,
+      ...(PYTHON_TEMPLATES.includes(config.template)
+        ? []
+        : [`${pc.dim('Pkg Manager:')}  ${config.packageManager}`]),
+      ...(config.cicd === 'github'
+        ? [`${pc.dim('CI/CD:')}        GitHub Actions`]
+        : []),
+      '',
+      pc.dim('─────────────────────────────────────────────'),
+      '',
+      `${pc.bold('Files that would be generated:')}`,
+      '',
+      ...tree,
+      '',
+      pc.dim('─────────────────────────────────────────────'),
+      '',
+      `${pc.bold('Total:')} ${pc.cyan(String(allFiles.length))} files, ${pc.cyan(formatSize(totalBytes))}`,
+    ].join('\n'),
+    'Dry Run Preview'
+  );
+
+  p.outro(
+    `${pc.bgBlue(pc.white(' DRY RUN '))} ${pc.dim('No files written. Remove --dry-run to scaffold for real.')}`
+  );
+}
+
+/**
+ * Prompts user to open the project in their preferred editor.
+ */
+async function promptOpenEditor(projectRoot: string): Promise<void> {
+  const openChoice = await p.select<string>({
+    message: 'Open project in editor?',
+    options: [
+      { value: 'none', label: `${pc.dim('✗')} Done — I'll open it myself` },
+      { value: 'code', label: `${pc.blue('⬡')} Visual Studio Code`, hint: 'code .' },
+      { value: 'cursor', label: `${pc.cyan('⌘')} Cursor`, hint: 'cursor .' },
+    ],
+  });
+
+  if (p.isCancel(openChoice) || openChoice === 'none') {
+    return;
+  }
+
+  try {
+    await execAsync(`${openChoice} .`, projectRoot, 5000);
+    p.log.info(`${pc.green('✓')} Opening in ${openChoice}...`);
+  } catch {
+    p.log.warning(`${pc.yellow('⚠')} Could not open ${openChoice}. Is it installed and in PATH?`);
+  }
+}
+
+/**
  * Injects AI context rule files into an existing project directory.
- * Does not create boilerplate files — only the 4 AI rule files + .aicustomrules template.
  */
 export async function injectRules(template: Template): Promise<void> {
   const projectRoot = process.cwd();
@@ -290,8 +396,6 @@ export async function injectRules(template: Template): Promise<void> {
 
 /**
  * Main scaffolding orchestrator.
- * Creates the project directory, writes template files, generates AI rules,
- * optionally initializes git.
  */
 export async function scaffoldProject(config: ProjectConfig): Promise<void> {
   // ── Resolve output path ────────────────────────────────────────
@@ -348,23 +452,35 @@ export async function scaffoldProject(config: ProjectConfig): Promise<void> {
 
   s3.stop(`${pc.green('✓')} Created README.md and .aicustomrules`);
 
-  // ── Step 4: Initialize git ─────────────────────────────────────
+  // ── Step 4: CI/CD pipeline ─────────────────────────────────────
+  let cicdCount = 0;
+  if (config.cicd === 'github') {
+    const s4 = p.spinner();
+    s4.start('Generating GitHub Actions CI pipeline...');
+
+    const cicdFiles = generateCICDFiles(config.template);
+    cicdCount = await writeFiles(projectRoot, cicdFiles);
+
+    s4.stop(`${pc.green('✓')} Generated GitHub Actions workflow`);
+  }
+
+  // ── Step 5: Initialize git ─────────────────────────────────────
   let gitInitialized = false;
   if (config.initGit) {
-    const s4 = p.spinner();
-    s4.start('Initializing git repository...');
+    const s5 = p.spinner();
+    s5.start('Initializing git repository...');
 
     gitInitialized = await initGitRepo(projectRoot);
 
     if (gitInitialized) {
-      s4.stop(`${pc.green('✓')} Initialized git repository with initial commit`);
+      s5.stop(`${pc.green('✓')} Initialized git repository with initial commit`);
     } else {
-      s4.stop(`${pc.yellow('⚠')} Git initialization failed (is git installed?)`);
+      s5.stop(`${pc.yellow('⚠')} Git initialization failed (is git installed?)`);
     }
   }
 
   // ── Success Message ────────────────────────────────────────────
-  const totalFiles = boilerplateCount + aiRuleCount + 2; // +2 for README + .aicustomrules
+  const totalFiles = boilerplateCount + aiRuleCount + cicdCount + 2;
 
   p.note(
     [
@@ -376,6 +492,9 @@ export async function scaffoldProject(config: ProjectConfig): Promise<void> {
         : [`${pc.dim('Pkg Manager:')}  ${config.packageManager}`]),
       `${pc.dim('Location:')}     ${pc.underline(projectRoot)}`,
       `${pc.dim('Git:')}          ${gitInitialized ? pc.green('Initialized') : config.initGit ? pc.yellow('Failed') : pc.dim('Skipped')}`,
+      ...(config.cicd === 'github'
+        ? [`${pc.dim('CI/CD:')}        ${pc.green('GitHub Actions')}`]
+        : []),
       '',
       pc.dim('─────────────────────────────────────────────'),
       '',
@@ -396,11 +515,11 @@ export async function scaffoldProject(config: ProjectConfig): Promise<void> {
       `  ${pc.cyan('1.')} cd ${pc.green(projectRoot !== path.resolve(process.cwd(), config.name) ? projectRoot : config.name)}`,
       `  ${pc.cyan('2.')} ${pc.green(meta.installCmd(config.packageManager))}`,
       `  ${pc.cyan('3.')} ${pc.green(meta.devCmd(config.packageManager))}`,
-      '',
-      `${pc.dim('Open the project in your favorite AI-powered editor and the')}`,
-      `${pc.dim('context rules will be picked up automatically. Happy coding!')}`,
     ].join('\n')
   );
+
+  // ── Step 6: Open in editor ─────────────────────────────────────
+  await promptOpenEditor(projectRoot);
 
   p.outro(
     `${pc.bgGreen(pc.black(' prompt-scaffold '))} ${pc.green('is ready!')} ${pc.dim('— AI-ready from day one ✨')}`

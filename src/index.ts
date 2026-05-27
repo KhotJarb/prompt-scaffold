@@ -9,7 +9,8 @@
 
 import { parseArgs, printHelp, printVersion } from './cli.js';
 import { gatherProjectConfig, gatherInjectConfig } from './prompts.js';
-import { scaffoldProject, injectRules } from './scaffold.js';
+import { scaffoldProject, injectRules, dryRunProject } from './scaffold.js';
+import { updateRules } from './update.js';
 import { detectTemplate, getTemplateLabel } from './detect.js';
 import pc from 'picocolors';
 
@@ -27,6 +28,12 @@ async function main(): Promise<void> {
     if (args.version) {
       printVersion();
       process.exit(0);
+    }
+
+    // ── Update Mode ────────────────────────────────────────────
+    if (args.update) {
+      await updateRules();
+      return;
     }
 
     // ── Inject Mode ────────────────────────────────────────────
@@ -55,6 +62,12 @@ async function main(): Promise<void> {
 
     if (!config) {
       process.exit(1);
+    }
+
+    // ── Dry Run ────────────────────────────────────────────────
+    if (args.dryRun) {
+      await dryRunProject(config);
+      return;
     }
 
     await scaffoldProject(config);

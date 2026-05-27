@@ -1,6 +1,6 @@
 {
   "name": "prompt-scaffold",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Universal AI-ready project scaffolder — generates projects with built-in context rules for Cursor, Windsurf, Copilot, and Claude Code.",
   "type": "module",
   "main": "./dist/index.js",

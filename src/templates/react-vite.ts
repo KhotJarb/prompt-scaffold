@@ -214,5 +214,56 @@ yarn-error.log*
 VITE_API_URL=http://localhost:3000
 `,
     },
+    {
+      path: '.prettierrc',
+      content: `{
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "printWidth": 100,
+  "bracketSpacing": true
+}
+`,
+    },
+    {
+      path: '.editorconfig',
+      content: `root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+`,
+    },
+    {
+      path: '.eslintrc.json',
+      content: JSON.stringify(
+        {
+          env: { browser: true, es2024: true },
+          extends: [
+            'eslint:recommended',
+            'plugin:@typescript-eslint/recommended',
+            'plugin:react-hooks/recommended',
+            'prettier',
+          ],
+          parser: '@typescript-eslint/parser',
+          parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
+          plugins: ['react-refresh'],
+          rules: {
+            'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+            '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+          },
+        },
+        null,
+        2
+      ),
+    },
   ];
 }
